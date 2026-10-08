@@ -79,4 +79,22 @@ void main() {
       expect(diff, isEmpty);
     });
   });
+
+  group('placementTransitionsEnabled', () {
+    test('is sent on, the MapLibre default, unless set', () {
+      final options = MapLibreMapOptions.fromWidget(MapLibreMap());
+      expect(options.toMap()['placementTransitionsEnabled'], isTrue);
+    });
+
+    test('is sent off when set off, and only as an update when it changed', () {
+      final on = MapLibreMapOptions.fromWidget(MapLibreMap());
+      final off = MapLibreMapOptions.fromWidget(
+        MapLibreMap(placementTransitionsEnabled: false),
+      );
+
+      expect(off.toMap()['placementTransitionsEnabled'], isFalse);
+      expect(on.updatesMap(off), {'placementTransitionsEnabled': false});
+      expect(off.updatesMap(off), isEmpty);
+    });
+  });
 }
