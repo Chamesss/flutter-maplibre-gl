@@ -3750,12 +3750,19 @@ final class MapLibreMapController
    */
   private void applyPlacementTransitions(@NonNull Style style) {
     final TransitionOptions current = style.getTransition();
+    // A style that sets no transition reads back as 0 ms, and writing that 0
+    // back would turn every fade off for good: MapLibre's default stands in.
+    final long duration =
+        current == null || current.getDuration() <= 0
+            ? DEFAULT_TRANSITION_DURATION_MS
+            : current.getDuration();
     style.setTransition(
         new TransitionOptions(
-            current == null ? 0 : current.getDuration(),
-            current == null ? 0 : current.getDelay(),
-            placementTransitionsEnabled));
+            duration, current == null ? 0 : current.getDelay(), placementTransitionsEnabled));
   }
+
+  /** MapLibre's own transition duration, used when a style sets none. */
+  private static final long DEFAULT_TRANSITION_DURATION_MS = 300;
 
   private void updateMyLocationEnabled() {
     if (this.locationComponent == null && mapLibreMap.getStyle() != null && myLocationEnabled) {
