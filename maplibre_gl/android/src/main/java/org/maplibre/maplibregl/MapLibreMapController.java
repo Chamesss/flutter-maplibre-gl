@@ -66,6 +66,7 @@ import org.maplibre.android.maps.Style;
 import org.maplibre.android.offline.OfflineManager;
 import org.maplibre.android.style.expressions.Expression;
 import org.maplibre.android.style.layers.CircleLayer;
+import org.maplibre.android.style.layers.TransitionOptions;
 import org.maplibre.android.style.layers.BackgroundLayer;
 import org.maplibre.android.style.layers.ColorReliefLayer;
 import org.maplibre.android.style.layers.FillExtrusionLayer;
@@ -217,6 +218,9 @@ final class MapLibreMapController
   private boolean disposed = false;
   private boolean dragEnabled = true;
   private boolean featureTapsTriggersMapClick = false;
+  // Whether MapLibre fades symbols as it places them. A style holds its own
+  // transition options, so this is applied again on every style load.
+  private boolean placementTransitionsEnabled = true;
   // Tint of the attribution (i) button, or null to leave the MapLibre SDK
   // default in place. Only set through the attributionButtonColor map option.
   private Integer attributionButtonColor = null;
@@ -254,6 +258,7 @@ final class MapLibreMapController
         @Override
         public void onStyleLoaded(@NonNull Style style) {
           MapLibreMapController.this.style = style;
+          applyPlacementTransitions(style);
 
           // Called unconditionally: updateMyLocationEnabled() checks myLocationEnabled
           // itself, and enableLocationComponent() checks the permission, so a map
@@ -3721,6 +3726,43 @@ final class MapLibreMapController
   public void setFeatureTapsTriggersMapClick(boolean triggers) {
     this.featureTapsTriggersMapClick = triggers;
   }
+
+  @Override
+  public void setPlacementTransitionsEnabled(boolean enabled) {
+    this.placementTransitionsEnabled = enabled;
+    if (style != null && style.isFullyLoaded()) {
+      applyPlacementTransitions(style);
+      // With transitions off nothing asks MapLibre for another frame once
+      // placement is done (no fade is running), so data placed while they were
+      // off can stay undrawn until the map next moves. One frame now draws it.
+      mapLibreMap.triggerRepaint();
+    }
+  }
+
+  /**
+   * Turns MapLibre's placement transitions on or off for [style], keeping the
+   * style's own transition duration and delay.
+   *
+   * <p>With them on, placement runs at most every 300 ms and fades symbols in:
+   * a symbol whose data just changed can be drawn, hidden by the next placement
+   * and faded back in. With them off, placement runs every frame and symbols
+   * change in the frame their data arrives.
+   */
+  private void applyPlacementTransitions(@NonNull Style style) {
+    final TransitionOptions current = style.getTransition();
+    // A style that sets no transition reads back as 0 ms, and writing that 0
+    // back would turn every fade off for good: MapLibre's default stands in.
+    final long duration =
+        current == null || current.getDuration() <= 0
+            ? DEFAULT_TRANSITION_DURATION_MS
+            : current.getDuration();
+    style.setTransition(
+        new TransitionOptions(
+            duration, current == null ? 0 : current.getDelay(), placementTransitionsEnabled));
+  }
+
+  /** MapLibre's own transition duration, used when a style sets none. */
+  private static final long DEFAULT_TRANSITION_DURATION_MS = 300;
 
   private void updateMyLocationEnabled() {
     if (this.locationComponent == null && mapLibreMap.getStyle() != null && myLocationEnabled) {

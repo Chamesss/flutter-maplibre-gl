@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## Unreleased
+
+### Added
+* **Android, iOS**: `MapLibreMap.placementTransitionsEnabled` and `MapLibreMapController.setPlacementTransitionsEnabled` turn MapLibre's symbol placement transitions off and on (`TransitionOptions.enablePlacementTransitions` on Android, `MLNStyle.performsPlacementTransitions` on iOS). With them on, MapLibre re-runs placement at most every 300 ms and fades symbols in, so a symbol whose GeoJSON data has just changed can be drawn, hidden by the next placement and faded back in. Turning them off around a source update places what changed in the frame it arrives. The setting survives style reloads, changing it triggers a repaint, and a style that sets no transition keeps MapLibre's 300 ms default instead of being written back as 0. Ignored on web.
+
 ## [0.27.1](https://github.com/maplibre/flutter-maplibre-gl/compare/v0.27.0...v0.27.1)
 
 ### Fixed

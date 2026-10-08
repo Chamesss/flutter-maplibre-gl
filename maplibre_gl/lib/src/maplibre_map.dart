@@ -30,6 +30,7 @@ class MapLibreMap extends StatefulWidget {
     this.doubleClickZoomEnabled,
     this.dragEnabled = true,
     this.featureTapsTriggersMapClick = false,
+    this.placementTransitionsEnabled = true,
     this.trackCameraPosition = false,
     this.myLocationEnabled = false,
     this.myLocationTrackingMode = MyLocationTrackingMode.none,
@@ -164,6 +165,21 @@ class MapLibreMap extends StatefulWidget {
   /// If `true`, both the feature tap and `onMapClick` events will fire when tapping a feature.
   /// If `false`, only the feature tap event fires, and `onMapClick` is not called.
   final bool featureTapsTriggersMapClick;
+
+  /// Whether MapLibre fades labels and symbols in and out as it places them.
+  /// Defaults to `true`, MapLibre's own default.
+  ///
+  /// With transitions on, MapLibre recomputes which symbols are shown at most
+  /// once every 300 ms and fades the result in. A symbol whose data has just
+  /// changed — a feature added to a GeoJSON source, a label that changed — can
+  /// therefore be drawn at once, then hidden by the next placement and faded
+  /// back in: it flickers. With transitions off, placement runs on every
+  /// frame and symbols appear and disappear at once, the frame their data
+  /// arrives.
+  ///
+  /// Applies to every symbol on the map, the style's own labels included, and
+  /// is kept across style changes. Android and iOS; ignored on web.
+  final bool placementTransitionsEnabled;
 
   /// Geographical bounding box for the camera target.
   final CameraTargetBounds cameraTargetBounds;
@@ -619,6 +635,7 @@ class MapLibreMapOptions {
     this.foregroundLoadColor,
     this.translucentTextureSurface,
     this.featureTapsTriggersMapClick,
+    this.placementTransitionsEnabled,
   });
 
   MapLibreMapOptions.fromWidget(MapLibreMap map)
@@ -653,6 +670,7 @@ class MapLibreMapOptions {
         foregroundLoadColor: map.foregroundLoadColor,
         translucentTextureSurface: map.translucentTextureSurface,
         featureTapsTriggersMapClick: map.featureTapsTriggersMapClick,
+        placementTransitionsEnabled: map.placementTransitionsEnabled,
       );
 
   final bool? compassEnabled;
@@ -712,6 +730,8 @@ class MapLibreMapOptions {
   final bool? translucentTextureSurface;
 
   final bool? featureTapsTriggersMapClick;
+
+  final bool? placementTransitionsEnabled;
 
   final _gestureGroup = {
     'rotateGesturesEnabled',
@@ -778,6 +798,7 @@ class MapLibreMapOptions {
     addIfNonNull('foregroundLoadColor', foregroundLoadColor?.toARGB32());
     addIfNonNull('translucentTextureSurface', translucentTextureSurface);
     addIfNonNull('featureTapsTriggersMapClick', featureTapsTriggersMapClick);
+    addIfNonNull('placementTransitionsEnabled', placementTransitionsEnabled);
     return optionsMap;
   }
 
